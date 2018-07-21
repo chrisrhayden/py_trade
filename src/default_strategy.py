@@ -2,7 +2,7 @@ class Strategy:
     ''' to show the methods and make sure the bot works '''
 
     def __init__(self, pair):
-        self.pairs = pair
+        self.pair = pair
 
     def filter_data(self, unfiltered_data):
         ''' a conveyance method to keep the strategy func clean '''
