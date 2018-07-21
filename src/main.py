@@ -1,24 +1,28 @@
 '''
-make an exchange class that will run a strategy on a given amount of symbols
-'''
+Usage:
+    py_trade -e EXCHANGE -p PAIRS
+
+
+Options:
+    -e --exchange EXCHANGE  an exchange to use
+
+    -p --pairs PAIRS        a comma separated string of symbol and currency pairs
+
+Examples:
+    trade both btc and eth on cex exchange
+        py_trade -e 'cex' -s 'BTC/USD,ETH/USD'
+''' # noqa: 501
+# E501: lines over 80 chars
 
 import logging
 
 import ccxt
 
+from docopt import docopt
+
 from PyTrade import PyTrade
 from default_strategy import Strategy
 from csv_utils import write_csv
-
-
-class Coin:
-    def __init__(self, symbol, strategy, filter_func):
-        self.symbol = symbol
-
-        self.StrategyClass = strategy
-        self.strategy = self.StrategyClass.check_strategy
-
-        self.filter_func = filter_func
 
 
 def setup_logger():
@@ -34,43 +38,83 @@ def setup_logger():
     fh.setFormatter(formatter)
 
     sh = logging.StreamHandler()
-    sh.setLevel(logging.INFO)
+    sh.setLevel(logging.DEBUG)
     sh.setFormatter(formatter)
 
     logger.addHandler(sh)
     logger.addHandler(fh)
 
 
-def last_candle(candle_list):
-    return candle_list[0]
+def process_args(args):
+    ''' return a instantiated ccxt exchange class '''
+    exchange_name = args['--exchange']
 
+    try:
+        ex_attr = getattr(ccxt, exchange_name)
+    except AttributeError:
+        print(f'{exchange_name} is not a ccxt supported exchange')
+        return False, False
 
-def make_coin_class(symbols, strategy):
-    coins = [Coin(s, strategy, last_candle) for s in symbols]
-
-    return coins
-
-
-def main():
-    ''' the start function '''
-
-    setup_logger()
-
-    exchange = ccxt.cex({'enableRateLimit': None})
+    exchange = ex_attr({'enableRateLimit': False})
 
     exchange.load_markets()
 
-    symbols = ['BTC/USD', 'ETH/USD',
-               'BCH/USD', 'BTG/USD',
-               'DASH/USD', 'XRP/USD',
-               'XLM/USD', 'ZEC/USD']
+    available_pairs = exchange.markets.keys()
 
-    coins = make_coin_class(symbols, Strategy())
+    maybe_pairs = args['--pairs'].split(',')
 
-    bot = PyTrade(exchange, coins, [write_csv])
+    pairs = []
+    bad_pairs = []
+
+    for s in maybe_pairs:
+        if s not in available_pairs:
+            bad_pairs.append(s)
+        else:
+            pairs.append(s)
+
+    if bad_pairs:
+        print(f'\na few pairs are not present in the {exchange_name} market'
+              '\nwould you like to continue with out these pairs'
+              f'\n\n - included {pairs}'
+              f'\n\n - not included {bad_pairs}'
+              '\n\n'
+              )
+        user_input = input(' [y]es|[n]o -> ').lower()
+
+        if user_input == 'no' or user_input == 'n':
+            return False, False
+
+    return exchange, pairs
+
+
+def make_strategies(pairs):
+    # TODO: make dynamic
+    return [Strategy(p) for p in pairs]
+
+
+def main(args):
+    ''' the start function '''
+    # symbols = ['BTC/USD', 'ETH/USD',
+    #            'BCH/USD', 'BTG/USD',
+    #            'DASH/USD', 'XRP/USD',
+    #            'XLM/USD', 'ZEC/USD']
+    setup_logger()
+
+    exchange, pairs = process_args(args)
+
+    if exchange is False:
+        return
+
+    strategys = make_strategies(pairs)
+
+    plugins = [write_csv]
+
+    bot = PyTrade(exchange, strategys, plugins)
 
     bot.start_bot()
 
 
 if __name__ == '__main__':
-    main()
+    args = docopt(__doc__)
+    print(args)
+    main(args)
