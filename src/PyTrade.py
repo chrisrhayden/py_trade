@@ -7,7 +7,7 @@ from ccxt import (RequestTimeout, DDoSProtection, ExchangeError)
 
 def future_wraper(fn, *args, **kwargs):
     '''
-    id like a function to at least return true if its a plugin
+    id like all plugins / functions to at least return something
 
     since the inner function is not getting called by the executor we need to
     pass it something it can call so we use the lambdas
