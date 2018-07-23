@@ -33,7 +33,12 @@ class PyTrade:
         self.max_workers = 4
         # TODO: this needs to be exchange dependent
         # the amount of time we can call the api in a second
-        self.max_api_calls = 10
+        self.max_api_calls = 3
+
+        # needs to be 
+        # self.max_timeout_retries = 10
+        # the timeout_retries needs to be unique for every strategy
+        # self.timeout_retries = 0
 
         self.exchange = exchange
         self.strategys = strategys
@@ -43,8 +48,6 @@ class PyTrade:
         self.wait_data_stack = []
 
         self.plugin_data_stack = []
-
-        self.max_retries = 10
 
     def reset_bot(self):
         self.api_hit_this_second = 0
@@ -90,6 +93,7 @@ class PyTrade:
         except RequestTimeout:
             self.log.error('request timeout')
             # TODO: set a limit on retries
+            if self.max_timeout_retries:
             return self.get_data(strategy)
 
         if candles is None or candles[0] is None:

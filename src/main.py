@@ -26,10 +26,11 @@ from csv_utils import write_csv
 
 
 def setup_logger():
+    ''' make the log handlers and set the format_str '''
+
     fmt_str = '[%(asctime)s] - [%(levelname)s] - %(funcName)s - %(message)s'
     formatter = logging.Formatter(fmt_str)
 
-    # get the logger
     logger = logging.getLogger('py_trade')
     logger.setLevel(logging.DEBUG)
 
@@ -47,6 +48,7 @@ def setup_logger():
 
 def process_args(args):
     ''' return a instantiated ccxt exchange class '''
+
     exchange_name = args['--exchange']
 
     try:

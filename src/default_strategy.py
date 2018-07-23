@@ -5,7 +5,7 @@ class Strategy:
         self.pair = pair
 
     def filter_data(self, unfiltered_data):
-        ''' a conveyance method to keep the strategy func clean '''
+        ''' a convenience method to keep the strategy func clean '''
         return unfiltered_data[0]
 
     def check_strategy(self, data):
