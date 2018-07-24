@@ -1,6 +1,6 @@
 '''
 Usage:
-    py_trade -e EXCHANGE -p PAIRS
+    py_trade -e EXCHANGE -p PAIRS -s STRATEGY [-l LOG_LEVEL]
 
 
 Options:
@@ -8,24 +8,30 @@ Options:
 
     -p --pairs PAIRS        a comma separated string of symbol and currency pairs
 
+    -s --strategy STRATEGY  the strategy module to use, must be in src/
+
+    -l --log-cli LOG_LEVEL  set the cli logging level, if not set nothing will
+                            be logged to the console
+                                i.e. 'DEBUG' or 'INFO'
+
 Examples:
     trade both btc and eth on cex exchange
-        py_trade -e 'cex' -s 'BTC/USD,ETH/USD'
+        py_trade -e 'cex' -s 'BTC/USD,ETH/USD' -s any_strat -l 'INFO'
 ''' # noqa: 501
 # E501: lines over 80 chars
 
 import logging
+import importlib
 
 import ccxt
 
 from docopt import docopt
 
 from PyTrade import PyTrade
-from default_strategy import Strategy
 from csv_utils import write_csv
 
 
-def setup_logger():
+def setup_logger(args):
     ''' make the log handlers and set the format_str '''
 
     fmt_str = '[%(asctime)s] - [%(levelname)s] - %(funcName)s - %(message)s'
@@ -38,12 +44,19 @@ def setup_logger():
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
 
-    sh = logging.StreamHandler()
-    sh.setLevel(logging.DEBUG)
-    sh.setFormatter(formatter)
-
-    logger.addHandler(sh)
     logger.addHandler(fh)
+
+    if args['--log-cli']:
+        sh = logging.StreamHandler()
+
+        log_level = args['--log-cli'].upper()
+        sh.setLevel(getattr(logging, log_level))
+
+        sh.setFormatter(formatter)
+
+        logger.addHandler(sh)
+
+    return logger
 
 
 def process_args(args):
@@ -51,11 +64,7 @@ def process_args(args):
 
     exchange_name = args['--exchange']
 
-    try:
-        ex_attr = getattr(ccxt, exchange_name)
-    except AttributeError:
-        print(f'{exchange_name} is not a ccxt supported exchange')
-        return False, False
+    ex_attr = getattr(ccxt, exchange_name)
 
     exchange = ex_attr({'enableRateLimit': False})
 
@@ -89,25 +98,36 @@ def process_args(args):
     return exchange, pairs
 
 
-def make_strategies(pairs):
-    # TODO: make dynamic
-    return [Strategy(p) for p in pairs]
+def make_strategies(pairs, strategy_name):
+    ''' return a list of strategy's with given pairs '''
+
+    # TODO: make this work for any path
+    strat_module = importlib.import_module(strategy_name)
+
+    return [strat_module.Strategy(p) for p in pairs]
 
 
 def main(args):
-    ''' the start function '''
-    # symbols = ['BTC/USD', 'ETH/USD',
-    #            'BCH/USD', 'BTG/USD',
-    #            'DASH/USD', 'XRP/USD',
-    #            'XLM/USD', 'ZEC/USD']
-    setup_logger()
+    '''
+    gather the various parts and run the bot loop
+
+    symbols = ['BTC/USD', 'ETH/USD',
+               'BCH/USD', 'BTG/USD',
+               'DASH/USD', 'XRP/USD',
+               'XLM/USD', 'ZEC/USD']
+
+
+    at the moment the setup will panic when something isn't right but hopefully
+    once the strategy's are running i can kill a panicking strategy without the
+    others dieing as well
+    '''
 
     exchange, pairs = process_args(args)
 
     if exchange is False:
         return
 
-    strategys = make_strategies(pairs)
+    strategys = make_strategies(pairs, args['--strategy'])
 
     plugins = [write_csv]
 
@@ -118,5 +138,6 @@ def main(args):
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    print(args)
+    logger = setup_logger(args)
+    logger.debug(args)
     main(args)
