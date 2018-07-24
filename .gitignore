@@ -136,4 +136,4 @@ tags
 
 *.log
 csv_data/*
-src/secrets.py
+src/secret*
