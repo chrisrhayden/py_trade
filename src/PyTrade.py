@@ -35,7 +35,7 @@ class PyTrade:
         # the amount of time we can call the api in a second
         self.max_api_calls = 3
 
-        # needs to be 
+        # needs to be
         # self.max_timeout_retries = 10
         # the timeout_retries needs to be unique for every strategy
         # self.timeout_retries = 0
@@ -69,6 +69,7 @@ class PyTrade:
 
                 for fn in self.plugin_functions:
                     self.run_plugin(ex, fn)
+                self.plugin_data_stack = []
 
                 self.log.debug(f'loop delta: {time.time() - begin_loop}')
 
@@ -93,7 +94,6 @@ class PyTrade:
         except RequestTimeout:
             self.log.error('request timeout')
             # TODO: set a limit on retries
-            if self.max_timeout_retries:
             return self.get_data(strategy)
 
         if candles is None or candles[0] is None:
@@ -147,10 +147,11 @@ class PyTrade:
             exception_to_unwrap.result()
 
         except DDoSProtection:
-            print('\nddos exception\n will add to the wait_data_stack\n')
+            self.log.error('ddos exception')
             stack.append(source)
 
         except ExchangeError as e:
+            # TODO i havent hit any yet
             print('ExchangeError >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e)
 
     def loop_logic(self, executor, strategys):
