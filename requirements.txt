@@ -1,6 +1,7 @@
 aiodns==1.1.1
 aiohttp==3.3.2
 async-timeout==3.0.0
+atomicwrites==1.1.5
 attrs==18.1.0
 cchardet==2.1.1
 ccxt==1.16.89
@@ -9,8 +10,13 @@ chardet==3.0.4
 docopt==0.6.2
 idna==2.7
 idna-ssl==1.1.0
+more-itertools==4.2.0
 multidict==4.3.1
+pluggy==0.6.0
+py==1.5.4
 pycares==2.3.0
+pytest==3.6.3
 requests==2.19.1
+six==1.11.0
 urllib3==1.23
 yarl==1.1.0

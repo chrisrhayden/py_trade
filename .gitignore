@@ -137,3 +137,4 @@ tags
 *.log
 csv_data/*
 src/secret*
+*__pycache__*
