@@ -26,7 +26,7 @@ def future_wraper(fn, *args, **kwargs):
 
 
 class PyTrade:
-    def __init__(self, exchange, strategys, functions):
+    def __init__(self, exchange, strategys, plugins=None):
         self.log = logging.getLogger('py_trade')
 
         # cpu dependent I think, make this a variable some how
@@ -35,14 +35,14 @@ class PyTrade:
         # the amount of time we can call the api in a second
         self.max_api_calls = 3
 
-        # needs to be
+        # needs to be on a per strategy basis
         # self.max_timeout_retries = 10
         # the timeout_retries needs to be unique for every strategy
         # self.timeout_retries = 0
 
         self.exchange = exchange
         self.strategys = strategys
-        self.plugin_functions = functions
+        self.plugin_functions = plugins
 
         self.api_hit_this_second = 0
         self.wait_data_stack = []
@@ -66,12 +66,14 @@ class PyTrade:
                 begin_loop = time.time()
                 # run the logic / strategy
                 self.loop_logic(ex, self.strategys)
+                self.log.debug(f'data loop delta: {time.time() - begin_loop}')
 
                 for fn in self.plugin_functions:
                     self.run_plugin(ex, fn)
                 self.plugin_data_stack = []
 
-                self.log.debug(f'loop delta: {time.time() - begin_loop}')
+                self.log.debug(
+                        f'with plugins loop delta: {time.time() - begin_loop}')
 
                 # make sure to fall out of the current minute
                 time.sleep(1)
@@ -103,10 +105,10 @@ class PyTrade:
         return candles
 
     def sell_function(self):
-        print('\n\nbuying >>>>>\n')
+        print('\n\nsellling >>>>>\n')
 
     def buy_function(self):
-        print('\n\nsellling >>>>>\n')
+        print('\n\nbuying >>>>>\n')
 
     def on_data(self, strategy, raw_data):
         '''
