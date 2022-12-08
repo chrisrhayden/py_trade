@@ -5,7 +5,7 @@ atomicwrites==1.1.5
 attrs==18.1.0
 cchardet==2.1.1
 ccxt==1.16.89
-certifi==2018.4.16
+certifi==2022.12.7
 chardet==3.0.4
 docopt==0.6.2
 idna==2.7
